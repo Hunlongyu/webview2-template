@@ -11,13 +11,21 @@
 #include <wil/com.h>
 #include <AccCtrl.h>
 #include <AclAPI.h>
+#include <fstream>
+#include <atlstr.h>
 
 #include "webView2.h"
+#include "includes/json.hpp"
 using namespace Microsoft::WRL;
+using json = nlohmann::json;
 
 // Global variables
 static TCHAR szWindowClass[] = _T("DesktopApp");
-static TCHAR szTitle[] = _T("App");
+TCHAR szTitle[] = _T("title");
+std::string szIcon = "app.ico";
+int szWidth = 1080;
+int szHeight = 720;
+std::string szLaunch = "index.html";
 
 HINSTANCE hInst;
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -55,8 +63,66 @@ std::wstring GetLocalUri(std::wstring relativePath, bool useVirtualHostName)
 	}
 }
 
+// 获取配置文件的数据
+void GetConfigJsonFile()
+{
+	std::wstring path = GetLocalPath(L"config.json", false);
+	json config;
+	std::ifstream jFile(path);
+	if (!jFile.is_open()) {
+		MessageBox(NULL, _T("未找到 config.json 文件!"), _T("Error!"), NULL);
+	}
+	try {
+		jFile >> config;
+	}
+	catch (json::exception& e) {
+		auto error = e.what();
+		MessageBox(NULL, _T("config.json 数据格式不对，请检查后重试。"), _T("Warning!"), NULL);
+		return;
+	}
+
+	auto it_windowTitle = config.find("windowTitle");
+	if (it_windowTitle != config.end()) {
+		std::string title = config.at("windowTitle");
+		if (!title.empty()) {
+			_tcscpy_s(szTitle, CA2T(title.c_str()));
+		}
+	}
+
+	auto it_icon = config.find("icon");
+	if (it_icon != config.end()) {
+		std::string icon = config.at("icon");
+		if (!icon.empty()) {
+			szIcon = icon;
+		}
+	}
+
+	auto it_width = config.find("width");
+	if (it_width != config.end()) {
+		int width = config.at("width");
+		szWidth = width;
+	}
+
+	auto it_height = config.find("height");
+	if (it_height != config.end()) {
+		int height = config.at("height");
+		szHeight = height;
+	}
+
+	auto it_launch = config.find("launch");
+	if (it_launch != config.end()) {
+		std::string launch = config.at("launch");
+		if (!launch.empty()) {
+			szLaunch = launch;
+		}
+	}
+
+	jFile.close();
+}
+
 int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow)
 {
+	GetConfigJsonFile();
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -64,12 +130,12 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance, _In
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
 	wcex.hInstance = hInstance;
-	wcex.hIcon = LoadIcon(hInstance, IDI_APPLICATION);
+	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_APP));
 	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszMenuName = NULL;
 	wcex.lpszClassName = szWindowClass;
-	wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
+	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
 	if (!RegisterClassEx(&wcex)) {
 		MessageBox(NULL, _T("Call to RegisterClassEx failed!"), _T("Windows Desktop Guided Tour"), NULL);
@@ -77,7 +143,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance, _In
 	}
 
 	hInst = hInstance;
-	HWND hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1080, 720, NULL, NULL, hInstance, NULL);
+	HWND hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, szWidth, szHeight, NULL, NULL, hInstance, NULL);
 
 	if (!hWnd) {
 		MessageBox(NULL, _T("Call to CreateWindow failed!"), _T("Windows Desktop Guided Tour"), NULL);
@@ -105,6 +171,7 @@ int CALLBACK WinMain(_In_ HINSTANCE hInstance, _In_ HINSTANCE hPrevInstance, _In
 						webviewWindow->get_Settings(&Settings);
 						Settings->put_IsScriptEnabled(TRUE);
 						Settings->put_AreDefaultScriptDialogsEnabled(TRUE);
+						Settings->put_AreDefaultContextMenusEnabled(FALSE);
 						Settings->put_IsWebMessageEnabled(TRUE);
 
 						RECT bounds;

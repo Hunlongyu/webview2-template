@@ -21,10 +21,13 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Resource.h">
+    <ClInclude Include="resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="App.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\json.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -52,5 +55,12 @@
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="asstes\index.html" />
+    <CopyFileToFolders Include="config.json" />
+    <CopyFileToFolders Include="asstes\app.ico">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
   </ItemGroup>
 </Project>

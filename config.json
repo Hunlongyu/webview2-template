@@ -1,0 +1,7 @@
+﻿{
+  "windowTitle": "App",
+  "icon": "assets\\app.ico",
+  "width": 
+  "height": 260,
+  "launch": "assets\\index.html"
+}
