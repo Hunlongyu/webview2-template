@@ -52,6 +52,7 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include=".gitignore" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="asstes\index.html" />
